@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: mpesa-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: MPESA_CONSUMER_KEY
+        value: 5mvtURWHdAzBKJtUq6UwJFazBH1D7MqXzPd5VfguW01tAGOQ
+      - key: MPESA_CONSUMER_SECRET
+        value: tsbEIsgzuGTDMoK7ez0C7iQE6CCbQyBVDEyEPyFAFNdG1B1FvBUTt2drHb6MAgQa
+      - key: MPESA_PASSKEY
+        value: MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUwNTA0MDgzMzMw
+      - key: MPESA_SHORTCODE
+        value: 174379
+      - key: MPESA_CALLBACK_URL
+        value: https://mpesa-backend.onrender.com/api/callback
