@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Meal Program Payment Portal | MR MULLI SCHOOL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <!-- Add Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    :root {
+      --primary-color: #0072ff;
+      --secondary-color: #00c6ff;
+      --meal-color: #28a745;
+      --donation-color: #6f42c1;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .payment-container {
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    
+    .payment-card {
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    
+    .payment-header {
+      background-color: white;
+      padding: 2rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .payment-body {
+      background-color: white;
+      padding: 2rem;
+    }
+    
+    .school-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 1rem;
+    }
+    
+    .nav-pills .nav-link {
+      border-radius: 10px;
+      margin: 0 5px;
+      font-weight: 500;
+    }
+    
+    .nav-pills .nav-link.active {
+      background-color: var(--primary-color);
+    }
+    
+    .form-control {
+      height: 50px;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      padding-left: 20px;
+      transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.25rem rgba(0, 114, 255, 0.25);
+    }
+    
+    .btn-pay {
+      background-color: var(--primary-color);
+      border: none;
+      height: 50px;
+      border-radius: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+    }
+    
+    .btn-pay:hover {
+      background-color: #0062cc;
+      transform: translateY(-2px);
+    }
+    
+    .btn-donate {
+      background-color: var(--donation-color);
+      border: none;
+    }
+    
+    .btn-donate:hover {
+      background-color: #5a32a3;
+    }
+    
+    .payment-method {
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .payment-method:hover {
+      border-color: var(--primary-color);
+      background-color: rgba(0, 114, 255, 0.05);
+    }
+    
+    .payment-method.selected {
+      border-color: var(--primary-color);
+      background-color: rgba(0, 114, 255, 0.1);
+    }
+    
+    .mpesa-icon {
+      color: #00b300;
+      font-size: 2rem;
+    }
+    
+    .donation-option {
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .donation-option:hover {
+      border-color: var(--donation-color);
+      background-color: rgba(111, 66, 193, 0.05);
+    }
+    
+    .donation-option.selected {
+      border-color: var(--donation-color);
+      background-color: rgba(111, 66, 193, 0.1);
+    }
+    
+    .payment-success {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .payment-success i {
+      font-size: 4rem;
+      color: var(--meal-color);
+      margin-bottom: 1rem;
+    }
+    
+    .loading-spinner {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="payment-container">
+    <div class="payment-card">
+      <div class="payment-header">
+        <img src="https://img.icons8.com/fluency/48/school.png" alt="School Logo" class="school-logo">
+        <h3 class="mb-1">MR MULLI INTL SCHOOL</h3>
+        <p class="text-muted">Meal Program Payments</p>
+      </div>
+      
+      <div class="payment-body">
+        <div class="loading-spinner" id="loadingSpinner">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3">Processing your payment...</p>
+        </div>
+        
+        <ul class="nav nav-pills mb-4 justify-content-center">
+          <li class="nav-item">
+            <a class="nav-link active" id="parent-tab" data-bs-toggle="pill" href="#parent-payment">Parent Payment</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="donor-tab" data-bs-toggle="pill" href="#donor-payment">Donate Meals</a>
+          </li>
+        </ul>
+        
+        <div class="tab-content" id="tabContent">
+          <!-- Parent Payment Tab -->
+          <div class="tab-pane fade show active" id="parent-payment">
+            <form id="parentPaymentForm">
+              <div class="mb-3">
+                <label for="studentAdmission" class="form-label">Student Admission Number</label>
+                <input type="text" class="form-control" id="studentAdmission" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="parentNamePayment" class="form-label">Parent/Guardian Name</label>
+                <input type="text" class="form-control" id="parentNamePayment" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="parentPhonePayment" class="form-label">M-Pesa Phone Number</label>
+                <div class="input-group">
+                  <span class="input-group-text">+254</span>
+                  <input type="tel" class="form-control" id="parentPhonePayment" placeholder="7XXXXXXXX" required>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="paymentAmount" class="form-label">Amount (KES)</label>
+                <div class="input-group">
+                  <span class="input-group-text">KES</span>
+                  <input type="number" class="form-control" id="paymentAmount" required>
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <label class="form-label">Payment Method</label>
+                <div class="payment-method selected" onclick="selectPaymentMethod(this, 'mpesa')">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-phone mpesa-icon me-3"></i>
+                    <div>
+                      <h6 class="mb-1">M-Pesa STK Push</h6>
+                      <p class="text-muted mb-0">Payment request sent directly to your phone</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <button type="submit" class="btn btn-pay w-100">
+                <i class="bi bi-lock"></i> Pay Now via M-Pesa
+              </button>
+            </form>
+          </div>
+          
+          <!-- Donor Payment Tab -->
+          <div class="tab-pane fade" id="donor-payment">
+            <form id="donorPaymentForm">
+              <div class="mb-3">
+                <label for="donorName" class="form-label">Your Name</label>
+                <input type="text" class="form-control" id="donorName" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="donorPhone" class="form-label">M-Pesa Phone Number</label>
+                <div class="input-group">
+                  <span class="input-group-text">+254</span>
+                  <input type="tel" class="form-control" id="donorPhone" placeholder="7XXXXXXXX" required>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Donation Type</label>
+                <div class="donation-option selected" onclick="selectDonationOption(this, 'specific')">
+                  <h6><i class="bi bi-person-heart"></i> Sponsor Specific Student</h6>
+                  <p class="text-muted mb-0">Provide meals for a particular needy student</p>
+                </div>
+                <div class="donation-option" onclick="selectDonationOption(this, 'general')">
+                  <h6><i class="bi bi-people-fill"></i> General Meal Fund</h6>
+                  <p class="text-muted mb-0">Contribute to the school's general meal program</p>
+                </div>
+              </div>
+              
+              <div id="specificStudentSection">
+                <div class="mb-3">
+                  <label for="sponsoredStudent" class="form-label">Student Admission Number</label>
+                  <input type="text" class="form-control" id="sponsoredStudent">
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="donationAmount" class="form-label">Amount (KES)</label>
+                <div class="input-group">
+                  <span class="input-group-text">KES</span>
+                  <input type="number" class="form-control" id="donationAmount" required>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="donationFrequency" class="form-label">Donation Frequency</label>
+                <select class="form-select" id="donationFrequency">
+                  <option value="one-time">One-time donation</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              
+              <button type="submit" class="btn btn-donate btn-pay w-100">
+                <i class="bi bi-heart"></i> Donate via M-Pesa
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <div class="payment-success" id="paymentSuccess">
+          <i class="bi bi-check-circle-fill"></i>
+          <h4 class="mb-3">Payment Successful!</h4>
+          <p id="successMessage">Thank you for your payment. The amount has been credited to the meal program.</p>
+          <button class="btn btn-outline-primary" onclick="resetPaymentForm()">
+            <i class="bi bi-arrow-left"></i> Return to Portal
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Initialize Firebase (replace with your config)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCOkdtYGr6lVk3zaDmTUjuE-TWYROHKpsM",
+  authDomain: "biometrics-feeding-program2.firebaseapp.com",
+  databaseURL: "https://biometrics-feeding-program2-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "biometrics-feeding-program2",
+  storageBucket: "biometrics-feeding-program2.firebasestorage.app",
+  messagingSenderId: "360122807129",
+  appId: "1:360122807129:web:b44408f16c586806a71248",
+  measurementId: "G-FD08KKZTFD"
+
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    // Payment method selection
+    function selectPaymentMethod(element, method) {
+      document.querySelectorAll('.payment-method').forEach(method => {
+        method.classList.remove('selected');
+      });
+      element.classList.add('selected');
+    }
+
+    // Donation option selection
+    function selectDonationOption(element, type) {
+      document.querySelectorAll('.donation-option').forEach(option => {
+        option.classList.remove('selected');
+      });
+      element.classList.add('selected');
+      
+      // Show/hide specific student field
+      document.getElementById('specificStudentSection').style.display = 
+        type === 'specific' ? 'block' : 'none';
+    }
+
+    // Parent payment form submission
+    document.getElementById('parentPaymentForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      processPayment('parent');
+    });
+
+    // Donor payment form submission
+    document.getElementById('donorPaymentForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      processPayment('donor');
+    });
+
+    // Process payment and save to Firebase
+    function processPayment(type) {
+      // Show loading spinner
+      document.getElementById('tabContent').style.display = 'none';
+      document.getElementById('loadingSpinner').style.display = 'block';
+      
+      // Collect form data
+      const paymentData = {
+        type: type,
+        name: type === 'parent' 
+          ? document.getElementById('parentNamePayment').value 
+          : document.getElementById('donorName').value,
+        phone: '+254' + (type === 'parent' 
+          ? document.getElementById('parentPhonePayment').value 
+          : document.getElementById('donorPhone').value),
+        amount: type === 'parent' 
+          ? document.getElementById('paymentAmount').value 
+          : document.getElementById('donationAmount').value,
+        admissionNo: type === 'parent' 
+          ? document.getElementById('studentAdmission').value 
+          : document.getElementById('sponsoredStudent').value,
+        donationType: type === 'donor' 
+          ? document.querySelector('.donation-option.selected h6').textContent.trim()
+          : null,
+        frequency: type === 'donor' 
+          ? document.getElementById('donationFrequency').value 
+          : 'one-time',
+        status: 'completed',
+        timestamp: new Date().toISOString()
+      };
+
+      // Save to Firebase Realtime Database
+      const paymentsRef = database.ref('payments');
+      paymentsRef.push(paymentData)
+        .then(() => {
+          // Simulate processing delay
+          setTimeout(() => {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('paymentSuccess').style.display = 'block';
+            document.getElementById('successMessage').textContent = 
+              type === 'donor' 
+                ? 'Thank you for your donation! The amount has been credited to the meal program.'
+                : 'Payment successful! The amount has been credited to your student\'s meal account.';
+          }, 2000);
+        })
+        .catch((error) => {
+          console.error('Error saving payment:', error);
+          document.getElementById('loadingSpinner').style.display = 'none';
+          document.getElementById('tabContent').style.display = 'block';
+          alert('An error occurred. Please try again.');
+        });
+    }
+
+    function resetPaymentForm() {
+      document.getElementById('paymentSuccess').style.display = 'none';
+      document.getElementById('tabContent').style.display = 'block';
+      document.getElementById('parentPaymentForm').reset();
+      document.getElementById('donorPaymentForm').reset();
+      
+      // Reset donation type to default
+      const donationOptions = document.querySelectorAll('.donation-option');
+      donationOptions[0].classList.add('selected');
+      donationOptions[1].classList.remove('selected');
+      document.getElementById('specificStudentSection').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
